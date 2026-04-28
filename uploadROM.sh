@@ -5,9 +5,17 @@ ANDROID_VER=$(cat $work_dir/bin/ddevice/androidver.txt)
 DEVICE_MODEL=$(cat $work_dir/bin/ddevice/device_model.txt)
 BASE_BUILD_ID=$(cat $work_dir/bin/ddevice/base_build_id.txt)
 BRAND=$(cat $work_dir/bin/ddevice/brand.txt)
-echo -n "$token" | base64 -d > "$work_dir/rclone.conf"
+echo -n "$token" | base64 -d > "$work_dir/rclone.conf" 2>/dev/null
+if ! grep -q '\[.*\]' "$work_dir/rclone.conf"; then
+    echo "$token" > "$work_dir/rclone.conf"
+fi
 RCLONE_CONFIG="$work_dir/rclone.conf"
-GDRIVE_REMOTE="mygdrive"
+GDRIVE_REMOTE=$(grep -o '\[.*\]' "$work_dir/rclone.conf" | head -n 1 | tr -d '[]\r')
+
+if [ -z "$GDRIVE_REMOTE" ]; then
+    echo "[GDRIVE] - Error: Could not find any remote section in rclone config"
+    exit 1
+fi
 
 if [[ $(git branch --show-current) == "beta" ]]; then
     VERSION="$(cat $work_dir/Version)"
@@ -45,7 +53,7 @@ PUBLIC_LINK=$(rclone --config="$RCLONE_CONFIG" link "$GDRIVE_REMOTE:uwumaOS/${up
 echo "[GDRIVE] - Download Link: $PUBLIC_LINK"
 
 echo "[SYSTEM] - Clean Workflow.."
-rm -rf $work_dir/out
+# rm -rf $work_dir/out  # Keep out directory for GitHub Artifacts upload
 rm -rf $work_dir/build
 
 echo "[INFO] - Build ${NTBUILD}_${VERSION} for ${DEVICE_MODEL} successfull !"
