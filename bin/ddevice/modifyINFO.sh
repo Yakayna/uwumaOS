@@ -33,6 +33,7 @@ fi
 
 else
 
-echo "[INFO] - Skip change information for A16"
+change_prop ro.build.version.oplusrom.display "$DEFAULT_VALUE | uwumaOS $UWUMA_VERSION"
+change_prop ro.build.display.id.show "$DEFAULT_VALUE | uwumaOS $UWUMA_VERSION"
 
 fi

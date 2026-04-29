@@ -53,6 +53,11 @@ if [ -f "$AGNES_BG" ]; then
         cp -f "$AGNES_BG" "$logo_file"
         echo "[MODS] - Replaced logo: $logo_file"
     done
+    # Replace coloros_16 logo (used on A16 About Device)
+    for logo_file in $(find "$SETTINGS_RES" -type f -name "coloros_16*"); do
+        cp -f "$AGNES_BG" "$logo_file"
+        echo "[MODS] - Replaced logo: $logo_file"
+    done
     replaced_count=$(find "$SETTINGS_RES" -type f -name "device_ota_card_bg*" | wc -l)
     echo "[MODS] - Total replaced: $replaced_count file(s)"
 else
