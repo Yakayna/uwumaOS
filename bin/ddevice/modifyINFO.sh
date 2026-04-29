@@ -33,8 +33,8 @@ fi
 
 else
 
-change_prop ro.build.version.oplusrom.display "$DEFAULT_VALUE | uwumaOS $UWUMA_VERSION"
 ROM_VERSION=$(cat "$work_dir/bin/ddevice/rom_version.txt")
+change_prop ro.build.version.oplusrom.display "$ROM_VERSION | uwumaOS $UWUMA_VERSION"
 change_prop ro.build.display.id.show "$ROM_VERSION | uwumaOS $UWUMA_VERSION"
 
 fi

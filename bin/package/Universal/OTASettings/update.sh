@@ -51,24 +51,41 @@ $APKEDITOR b -f -i $work_dir/apk_temp/isSettings.apk.out -o $work_dir/apk_temp/f
 if [ -f "$work_dir/apk_temp/final/$Settings" ]; then
     echo "[MODS] - Rebuilding Settings.apk..."
 
-    # Replace OTA card background images directly inside the rebuilt APK
+    # Replace OTA card background and logo images directly inside the rebuilt APK
     if [ -f "$AGNES_BG" ]; then
-        echo "[MODS] - Replacing OTA card background in rebuilt APK..."
+        echo "[MODS] - Replacing OTA card images in rebuilt APK..."
         REBUILT_APK="$work_dir/apk_temp/final/$Settings"
+        UWUMA_LOGO="$work_dir/bin/package/Universal/OTASettings/uwumaos_logo.png"
         replaced=0
-        # Get list of resource paths matching our target filenames
-        res_paths=$(unzip -l "$REBUILT_APK" | grep -oP 'res/\S+' | grep -E '(device_ota_card_bg|coloros_1[56])')
-        for res_path in $res_paths; do
-            # Create temp directory structure matching the APK internal path
+
+        # Replace background images (device_ota_card_bg*) with anime background
+        bg_paths=$(unzip -l "$REBUILT_APK" | grep -oP 'res/\S+' | grep -E 'device_ota_card_bg')
+        for res_path in $bg_paths; do
             temp_inject="$work_dir/apk_temp/inject"
             rm -rf "$temp_inject"
             mkdir -p "$temp_inject/$(dirname "$res_path")"
             cp -f "$AGNES_BG" "$temp_inject/$res_path"
-            # Inject into the APK at the correct path
             (cd "$temp_inject" && zip -0 "$REBUILT_APK" "$res_path") >/dev/null 2>&1
-            echo "[MODS] - Replaced: $res_path"
+            echo "[MODS] - Replaced BG: $res_path"
             replaced=$((replaced + 1))
         done
+
+        # Replace ColorOS logo images (coloros_15/16*) with uwumaOS logo
+        if [ -f "$UWUMA_LOGO" ]; then
+            logo_paths=$(unzip -l "$REBUILT_APK" | grep -oP 'res/\S+' | grep -E 'coloros_1[56]')
+            for res_path in $logo_paths; do
+                temp_inject="$work_dir/apk_temp/inject"
+                rm -rf "$temp_inject"
+                mkdir -p "$temp_inject/$(dirname "$res_path")"
+                cp -f "$UWUMA_LOGO" "$temp_inject/$res_path"
+                (cd "$temp_inject" && zip -0 "$REBUILT_APK" "$res_path") >/dev/null 2>&1
+                echo "[MODS] - Replaced Logo: $res_path"
+                replaced=$((replaced + 1))
+            done
+        else
+            echo "[WARN] - uwumaOS logo not found, skipping logo replacement..."
+        fi
+
         rm -rf "$work_dir/apk_temp/inject"
         echo "[MODS] - Total replaced: $replaced file(s)"
     else
