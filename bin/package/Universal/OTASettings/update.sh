@@ -39,30 +39,10 @@ $repS $OTAF $Smali1
 cat $OTAW >> $Smali1
 
 #Replace OTA Card Background Image (Light + Dark mode)
+# Note: -t raw decompile does NOT extract res/ directory, so we replace
+# images directly in the final rebuilt APK using zip commands.
 AGNES_BG="$work_dir/bin/package/Universal/OTASettings/agnes_ota_card_bg.jpg"
-SETTINGS_RES="$work_dir/apk_temp/isSettings.apk.out/res"
-if [ -f "$AGNES_BG" ]; then
-    echo "[MODS] - Replacing OTA card background (all variants)..."
-    # Replace all device_ota_card_bg variants (light, dark, all densities)
-    for bg_file in $(find "$SETTINGS_RES" -type f -name "device_ota_card_bg*"); do
-        cp -f "$AGNES_BG" "$bg_file"
-        echo "[MODS] - Replaced: $bg_file"
-    done
-    # Replace coloros_15 logo (used on A15 About Device)
-    for logo_file in $(find "$SETTINGS_RES" -type f -name "coloros_15*"); do
-        cp -f "$AGNES_BG" "$logo_file"
-        echo "[MODS] - Replaced logo: $logo_file"
-    done
-    # Replace coloros_16 logo (used on A16 About Device)
-    for logo_file in $(find "$SETTINGS_RES" -type f -name "coloros_16*"); do
-        cp -f "$AGNES_BG" "$logo_file"
-        echo "[MODS] - Replaced logo: $logo_file"
-    done
-    replaced_count=$(find "$SETTINGS_RES" -type f -name "device_ota_card_bg*" | wc -l)
-    echo "[MODS] - Total replaced: $replaced_count file(s)"
-else
-    echo "[WARN] - Agnes OTA background not found, skipping..."
-fi
+
 
 #Finishing
 Settings=$(basename $isSettings)
@@ -70,6 +50,31 @@ $APKEDITOR b -f -i $work_dir/apk_temp/isSettings.apk.out -o $work_dir/apk_temp/f
 
 if [ -f "$work_dir/apk_temp/final/$Settings" ]; then
     echo "[MODS] - Rebuilding Settings.apk..."
+
+    # Replace OTA card background images directly inside the rebuilt APK
+    if [ -f "$AGNES_BG" ]; then
+        echo "[MODS] - Replacing OTA card background in rebuilt APK..."
+        REBUILT_APK="$work_dir/apk_temp/final/$Settings"
+        replaced=0
+        # Get list of resource paths matching our target filenames
+        res_paths=$(unzip -l "$REBUILT_APK" | grep -oP 'res/\S+' | grep -E '(device_ota_card_bg|coloros_1[56])')
+        for res_path in $res_paths; do
+            # Create temp directory structure matching the APK internal path
+            temp_inject="$work_dir/apk_temp/inject"
+            rm -rf "$temp_inject"
+            mkdir -p "$temp_inject/$(dirname "$res_path")"
+            cp -f "$AGNES_BG" "$temp_inject/$res_path"
+            # Inject into the APK at the correct path
+            (cd "$temp_inject" && zip -0 "$REBUILT_APK" "$res_path") >/dev/null 2>&1
+            echo "[MODS] - Replaced: $res_path"
+            replaced=$((replaced + 1))
+        done
+        rm -rf "$work_dir/apk_temp/inject"
+        echo "[MODS] - Total replaced: $replaced file(s)"
+    else
+        echo "[WARN] - Agnes OTA background not found, skipping..."
+    fi
+
     rm -rf $isSettingsDIR/oat
 	rm -rf $isSettingsDIR/$Settings
     cp -rf $work_dir/apk_temp/final/$Settings $isSettingsDIR
