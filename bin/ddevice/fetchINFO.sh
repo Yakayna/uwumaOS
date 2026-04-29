@@ -136,7 +136,7 @@ echo "$SDK_LEVEL" > $work_dir/bin/ddevice/sdkLevel.txt
 echo "$DEVICE_MODEL" > $work_dir/bin/ddevice/device_model.txt
 echo "$MYNAME" > $work_dir/bin/ddevice/device_name.txt
 echo "$ID" > $work_dir/bin/ddevice/id.txt
-sed -E 's/^.*_([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\(.*$/\1/' $work_dir/bin/ddevice/id.txt > $BUILD_ID
+sed -E 's/^.*_([0-9]+(\.[0-9]+){1,3})\(.*$/\1/' "$work_dir/bin/ddevice/id.txt" > "$BUILD_ID"
 
 #Information To Script Flash
 echo "$ANDROID_VER" > $work_dir/bin/script2flash/META-INF/Data/AndroidVer
