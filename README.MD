@@ -29,3 +29,7 @@ Oplus Custom OEM ROM toolbuilder make from Official OEM ROM to Modifiled ROM wit
 - Claude
 - And everyone who testing ROM and feedback to me!
 - List will be updated soon.
+
+### License
+
+This project is licensed under the GNU General Public License v3.0 (GPLv3). See the [LICENSE](LICENSE) file for more details.
