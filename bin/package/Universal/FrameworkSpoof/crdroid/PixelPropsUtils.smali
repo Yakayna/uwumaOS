@@ -2240,3 +2240,46 @@
     :goto_3e4
     return-void
 .end method
+
+.method public static spoofFeatures(Ljava/lang/String;)Z
+    .registers 2
+
+    const/4 v0, 0x0
+
+    if-nez p0, :cond_check1
+    return v0
+
+    :cond_check1
+    const-string v1, "com.google.android.apps.photos."
+    invoke-virtual {p0, v1}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
+    move-result v1
+    if-eqz v1, :cond_check2
+
+    :return_true
+    const/4 v0, 0x1
+    return v0
+
+    :cond_check2
+    const-string v1, "com.google.android.feature.PIXEL_"
+    invoke-virtual {p0, v1}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
+    move-result v1
+    if-eqz v1, :cond_check3
+    goto :return_true
+
+    :cond_check3
+    const-string v1, "com.google.android.feature.GOOGLE_BUILD"
+    invoke-virtual {p0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+    move-result v1
+    if-eqz v1, :cond_check4
+    goto :return_true
+
+    :cond_check4
+    const-string v1, "com.google.android.feature.GOOGLE_EXPERIENCE"
+    invoke-virtual {p0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+    move-result v1
+    if-eqz v1, :cond_end
+    goto :return_true
+
+    :cond_end
+    return v0
+.end method

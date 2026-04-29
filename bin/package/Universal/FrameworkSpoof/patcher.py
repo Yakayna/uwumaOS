@@ -110,7 +110,7 @@ def patch_instrumentation(smali_root):
     return patched
 
 def patch_apm(smali_root):
-    """Patch ApplicationPackageManager.smali to add feature spoofing"""
+    """Patch ApplicationPackageManager.smali to hook hasSystemFeature"""
     target = None
     for p in smali_root.rglob("ApplicationPackageManager.smali"):
         if "android/app/ApplicationPackageManager.smali" in str(p).replace("\\","/"):
@@ -121,26 +121,39 @@ def patch_apm(smali_root):
     with open(target, 'r', encoding='utf-8', errors='ignore') as f:
         lines = f.readlines()
 
-    new_lines = []; fields_added = False; i = 0
+    new_lines = []
+    patched = 0
+    i = 0
     while i < len(lines):
-        line = lines[i]; new_lines.append(line)
+        line = lines[i]
+        new_lines.append(line)
 
-        # Add fields after sSync
-        if not fields_added and 'sSync:Ljava/lang/Object;' in line:
-            new_lines.append('    .field private static final blacklist featuresNexus:[Ljava/lang/String;\n')
-            new_lines.append('    .field private static final blacklist featuresPixelOthers:[Ljava/lang/String;\n')
-            new_lines.append('    .field private static final blacklist featuresPixel:[Ljava/lang/String;\n')
-            new_lines.append('    .field private static final blacklist featuresTensor:[Ljava/lang/String;\n')
-            new_lines.append('    .field private static final blacklist pTensorCodenames:[Ljava/lang/String;\n')
-            fields_added = True
+        # Hook hasSystemFeature(String) and hasSystemFeature(String, int)
+        if '.method public hasSystemFeature(Ljava/lang/String;)Z' in line or '.method public hasSystemFeature(Ljava/lang/String;I)Z' in line:
+            # Advance past .registers or .locals
+            while i + 1 < len(lines) and ('.registers' in lines[i+1] or '.locals' in lines[i+1] or '.annotation' in lines[i+1] or 'value =' in lines[i+1] or 'Ljava/lang/String;' in lines[i+1] or '}' in lines[i+1] or '.end annotation' in lines[i+1] or lines[i+1].strip() == ''):
+                i += 1
+                new_lines.append(lines[i])
+            
+            # Inject hook code
+            new_lines.append("""
+    invoke-static {p1}, Lcom/android/internal/util/crdroid/PixelPropsUtils;->spoofFeatures(Ljava/lang/String;)Z
+    move-result v0
+    if-eqz v0, :crdroid_hook_continue
+    const/4 v0, 0x1
+    return v0
+    :crdroid_hook_continue
+""")
+            patched += 1
         i += 1
 
-    if fields_added:
+    if patched > 0:
         with open(target, 'w', encoding='utf-8') as f: f.writelines(new_lines)
-        print("  [OK] ApplicationPackageManager.smali fields added")
+        print(f"  [OK] ApplicationPackageManager.smali patched ({patched} methods)")
+        return True
     else:
-        print("  [WARN] sSync field not found in ApplicationPackageManager.smali")
-    return fields_added
+        print("  [WARN] hasSystemFeature not found in ApplicationPackageManager.smali")
+        return False
 
 def main():
     if len(sys.argv) < 2:
