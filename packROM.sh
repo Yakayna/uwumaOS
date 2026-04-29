@@ -73,10 +73,9 @@ cp -rf "$work_dir/bin/script2flash/"*.exe "$work_dir/out/${OUTDIR}/"
 echo "[SCRIPT] - Done"
 
 if [[ $localbuild != "y" ]]; then
-  find "out/${OUTDIR}" |xargs touch
+  find "out/${OUTDIR}" -exec touch {} +
   pushd "out/${OUTDIR}/" || exit
-  zip -r "${OUTDIR}.zip" ./*
-  mv "${OUTDIR}.zip" ../
+  zip -r "../${OUTDIR}.zip" ./*
   popd || exit
   echo "[SCRIPT] - Build completed"
 else
